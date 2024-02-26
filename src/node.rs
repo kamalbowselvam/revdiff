@@ -2,12 +2,15 @@ use std::{cell::RefCell, rc::Rc};
 pub mod operation;
 use operation::Opeartion;
 use operation::Propogation;
+use ndarray::Array2;
+
+
 
 #[derive(Debug, Clone)]
 pub struct Node {
     label: String,
-    value: Box<i32>,
-    grad: Box<i32>,
+    value: Array2<f32>,
+    grad: Array2<f32>,
     opeartion: Option<Rc<RefCell<Opeartion>>>,
     children: Vec<Rc<RefCell<Node>>>,
     requires_grad: bool,
@@ -22,23 +25,23 @@ impl Node {
         self.opeartion = Some(op)
     }
 
-    pub fn get_value(&self) -> i32 {
-        return *self.value;
+    pub fn get_value(&self) -> Array2<f32> {
+        return self.value.clone();
     }
 
-    pub fn get_grad(&self) -> i32 {
-        return *self.grad;
+    pub fn get_grad(&self) -> Array2<f32>  {
+        return self.grad.clone();
     }
 
-    pub fn increase_grad(&mut self, grad: Box<i32>) {
-        *self.grad = *self.grad + *grad
+    pub fn increase_grad(&mut self, grad: Array2<f32>) {
+        self.grad = self.grad.clone() + grad;
     }
 
-    pub fn new(value: i32, name: String) -> Rc<RefCell<Node>> {
+    pub fn new(value: Array2<f32>, name: String) -> Rc<RefCell<Node>> {
         Rc::new(RefCell::new(Node {
             label: name,
-            value: Box::new(value),
-            grad: Box::new(0),
+            value: value.clone(),
+            grad: Array2::<f32>::zeros(value.dim()),
             opeartion: None,
             children: vec![],
             requires_grad: true,
@@ -47,7 +50,7 @@ impl Node {
 
     pub fn backward(
         pnode: &Rc<RefCell<Node>>,
-        grad: Option<Box<i32>>,
+        grad: Option<Array2<f32>>,
         node: Option<Rc<RefCell<Node>>>,
     ) {
         if pnode.borrow().requires_grad == false {
@@ -56,7 +59,7 @@ impl Node {
 
         let x = match grad {
             Some(x) => x,
-            None => Box::new(1),
+            None => Array2::<f32>::ones(pnode.borrow().get_value().dim())
         };
 
         pnode.borrow_mut().increase_grad(x);

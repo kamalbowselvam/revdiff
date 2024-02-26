@@ -37,16 +37,16 @@ impl Add {
         new_node
     }
 
-    pub fn backward(&self, grad: Box<i32>, node: Option<Rc<RefCell<Node>>>) {
+    pub fn backward(&self, grad: Array2<f32>, node: Option<Rc<RefCell<Node>>>) {
         match node {
             Some(x) => {
-                let a_grad = Box::new(1 * *grad);
+                let a_grad = 1.0 * grad.clone();
                 Node::backward(
                     &Rc::clone(&self.parents[0]),
                     Some(a_grad),
                     Some(Rc::clone(&x)),
                 );
-                let b_grad = Box::new(1 * *grad);
+                let b_grad = 1.0 * grad.clone();
                 Node::backward(
                     &Rc::clone(&self.parents[1]),
                     Some(b_grad),

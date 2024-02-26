@@ -36,16 +36,16 @@ impl Mul {
         new_node
     }
 
-    pub fn backward(&self, grad: Box<i32>, node: Option<Rc<RefCell<Node>>>) {
+    pub fn backward(&self, grad: Array2<f32>, node: Option<Rc<RefCell<Node>>>) {
         match node {
             Some(x) => {
-                let a_grad = Box::new(&self.parents[1].borrow().get_value() * *grad);
+                let a_grad = &self.parents[1].borrow().get_value() * grad.clone();
                 Node::backward(
                     &Rc::clone(&self.parents[0]),
                     Some(a_grad),
                     Some(Rc::clone(&x)),
                 );
-                let b_grad = Box::new(&self.parents[0].borrow().get_value() * *grad);
+                let b_grad = &self.parents[0].borrow().get_value() * grad.clone();
                 Node::backward(
                     &Rc::clone(&self.parents[1]),
                     Some(b_grad),

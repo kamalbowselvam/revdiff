@@ -9,7 +9,7 @@ pub trait Propogation {
     fn new(t: &str) -> Opeartion;
     fn add_parents(&mut self, node: Rc<RefCell<Node>>);
     fn forward(&self, node1: &Rc<RefCell<Node>>, node2: &Rc<RefCell<Node>>) -> Rc<RefCell<Node>>;
-    fn backward(&self, grad: Box<i32>, node: Option<Rc<RefCell<Node>>>);
+    fn backward(&self, grad: Array2<f32>, node: Option<Rc<RefCell<Node>>>);
 }
 
 #[derive(Debug, Clone)]
@@ -41,7 +41,7 @@ impl Propogation for Opeartion {
         }
     }
 
-    fn backward(&self, grad: Box<i32>, node: Option<Rc<RefCell<Node>>>) {
+    fn backward(&self, grad: Array2<f32>, node: Option<Rc<RefCell<Node>>>) {
         match self {
             Opeartion::Add(t) => t.backward(grad, node),
             Opeartion::Mul(t) => t.backward(grad, node),
