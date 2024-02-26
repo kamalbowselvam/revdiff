@@ -1,17 +1,14 @@
 use std::{cell::RefCell, rc::Rc};
-
-
 pub mod operation;
-use operation::Add;
 use operation::Opeartion;
-
+use operation::Propogation;
 
 #[derive(Debug, Clone)]
 pub struct Node {
     label: String,
     value: Box<i32>,
     grad: Box<i32>,
-    opeartion: Option<Rc<RefCell<Add>>>,
+    opeartion: Option<Rc<RefCell<Opeartion>>>,
     children: Vec<Rc<RefCell<Node>>>,
     requires_grad: bool,
 }
@@ -21,12 +18,16 @@ impl Node {
         self.children.push(node)
     }
 
-    pub fn add_operation(&mut self, op: Rc<RefCell<Add>>) {
+    pub fn add_operation(&mut self, op: Rc<RefCell<Opeartion>>) {
         self.opeartion = Some(op)
     }
 
     pub fn get_value(&self) -> i32 {
         return *self.value;
+    }
+
+    pub fn get_grad(&self) -> i32 {
+        return *self.grad;
     }
 
     pub fn increase_grad(&mut self, grad: Box<i32>) {
@@ -45,7 +46,7 @@ impl Node {
     }
 
     pub fn backward(
-        pnode: Rc<RefCell<Node>>,
+        pnode: &Rc<RefCell<Node>>,
         grad: Option<Box<i32>>,
         node: Option<Rc<RefCell<Node>>>,
     ) {

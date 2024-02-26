@@ -1,55 +1,50 @@
-use std::{cell::RefCell, rc::Rc};
 use super::*;
+use std::{cell::RefCell, rc::Rc};
+pub mod add;
+pub mod mul;
+use add::Add;
+use mul::Mul;
 
-
-pub trait Opeartion {
-    fn new() -> Self;
-    fn add_parents(&mut self,  node: Rc<RefCell<Node>>);
-    fn forward(node1: &Rc<RefCell<Node>>, node2: &Rc<RefCell<Node>>) -> Rc<RefCell<Node>>;
+pub trait Propogation {
+    fn new(t: &str) -> Opeartion;
+    fn add_parents(&mut self, node: Rc<RefCell<Node>>);
+    fn forward(&self, node1: &Rc<RefCell<Node>>, node2: &Rc<RefCell<Node>>) -> Rc<RefCell<Node>>;
     fn backward(&self, grad: Box<i32>, node: Option<Rc<RefCell<Node>>>);
 }
 
 #[derive(Debug, Clone)]
-pub struct Add {
-    parents: Vec<Rc<RefCell<Node>>>,
+pub enum Opeartion {
+    Add(Add),
+    Mul(Mul),
 }
 
-impl Opeartion for Add {
-    fn new() -> Self {
-        Self { parents: vec![] }
+impl Propogation for Opeartion {
+    fn new(t: &str) -> Opeartion {
+        match t {
+            "Add" => Opeartion::Add(Add::new()),
+            "Mul" => Opeartion::Mul(Mul::new()),
+            _ => panic!("Operation name is needed"),
+        }
     }
 
     fn add_parents(&mut self, node: Rc<RefCell<Node>>) {
-        self.parents.push(node)
+        match self {
+            Opeartion::Add(t) => t.add_parents(node),
+            Opeartion::Mul(t) => t.add_parents(node),
+        }
     }
 
-    fn forward(node1: &Rc<RefCell<Node>>, node2: &Rc<RefCell<Node>>) -> Rc<RefCell<Node>> {
-        let l1 = node1.borrow().get_value().clone();   // cloning here to avoid move 
-        let l2 = node2.borrow().get_value().clone();
-        let out_value = l1 + l2;
-        let s1 = node1.borrow().label.clone();
-        let s2 = node2.borrow().label.clone();
-        let s = s1 + " + " + &s2;
-        let new_node = Node::new(out_value, s);           // creating a new node 
-        let op = Add::new();
-        let nrc = Rc::new(RefCell::new(op));                    // creating new op
-        nrc.borrow_mut().add_parents(Rc::clone(node1));                // attaching parents to ops
-        nrc.borrow_mut().add_parents(Rc::clone(node2));
-        new_node.borrow_mut().add_operation(nrc);                              // attaching op to  child 
-        node1.borrow_mut().add_children(Rc::clone(&new_node));         // attaching child to parent
-        node2.borrow_mut().add_children(Rc::clone(&new_node));
-        new_node
+    fn forward(&self, node1: &Rc<RefCell<Node>>, node2: &Rc<RefCell<Node>>) -> Rc<RefCell<Node>> {
+        match self {
+            Opeartion::Add(t) => t.forward(node1, node2),
+            Opeartion::Mul(t) => t.forward(node1, node2),
+        }
     }
 
     fn backward(&self, grad: Box<i32>, node: Option<Rc<RefCell<Node>>>) {
-        match node {
-            Some(x) => {
-                let a_grad = Box::new(1 * *grad);
-                Node::backward(Rc::clone(&self.parents[0]), Some(a_grad), Some(Rc::clone(&x)));
-                let b_grad = Box::new(1 * *grad);
-                Node::backward(Rc::clone(&self.parents[1]), Some(b_grad), Some(Rc::clone(&x)));
-            }
-            None => (),
+        match self {
+            Opeartion::Add(t) => t.backward(grad, node),
+            Opeartion::Mul(t) => t.backward(grad, node),
         }
     }
 }
